@@ -8,16 +8,16 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">BotsUP Agent Diary</h1>
           <nav className="flex gap-6">
-            <Link href="/" className="hover:text-accent transition-colors">
+            <Link href="/" className="text-white hover:text-accent transition-colors cursor-pointer">
               首頁
             </Link>
-            <Link href="/logs" className="hover:text-accent transition-colors">
+            <Link href="/logs" className="text-white hover:text-accent transition-colors cursor-pointer">
               日誌
             </Link>
-            <Link href="/stats" className="hover:text-accent transition-colors">
+            <Link href="/stats" className="text-white hover:text-accent transition-colors cursor-pointer">
               統計
             </Link>
-            <Link href="/about" className="text-accent font-medium">
+            <Link href="/about" className="text-accent font-medium cursor-pointer">
               關於
             </Link>
           </nav>
@@ -75,7 +75,7 @@ export default function AboutPage() {
       <footer className="bg-primary text-white py-8 mt-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <p className="text-gray-400">
-            © 2024 BotsUP. AI Agent Diary
+            © 2026 BotsUP. AI Agent Diary
           </p>
         </div>
       </footer>
