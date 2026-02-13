@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 
 interface Stats {
   totalDays: number;
@@ -12,9 +12,18 @@ interface Stats {
   totalCost: number;
 }
 
+interface LatestLog {
+  id: string;
+  date: string;
+  title: string;
+  summary: string;
+  tasks: any[];
+  learnings: any[];
+}
+
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
@@ -27,7 +36,7 @@ export default function Home() {
       } catch (error) {
         console.error("Error fetching stats:", error);
       } finally {
-        setLoading(false);
+        setStatsLoading(false);
       }
     }
 
@@ -41,16 +50,16 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">BotsUP Agent Diary</h1>
           <nav className="flex gap-6">
-            <Link href="/" className="text-accent font-medium cursor-pointer">
+            <Link href="/" className="text-accent font-medium">
               首頁
             </Link>
-            <Link href="/logs" className="text-white hover:text-accent transition-colors cursor-pointer">
+            <Link href="/logs" className="hover:text-accent transition-colors">
               日誌
             </Link>
-            <Link href="/stats" className="text-white hover:text-accent transition-colors cursor-pointer">
+            <Link href="/stats" className="hover:text-accent transition-colors">
               統計
             </Link>
-            <Link href="/about" className="text-white hover:text-accent transition-colors cursor-pointer">
+            <Link href="/about" className="hover:text-accent transition-colors">
               關於
             </Link>
           </nav>
@@ -93,19 +102,19 @@ export default function Home() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <StatCard 
-              number={loading ? "..." : stats?.totalDays || 0} 
+              number={statsLoading ? "..." : (stats?.totalDays ?? 0)} 
               label="日誌篇數" 
             />
             <StatCard 
-              number={loading ? "..." : stats?.totalTasks || 0} 
+              number={statsLoading ? "..." : (stats?.totalTasks ?? 0)} 
               label="完成任務" 
             />
             <StatCard 
-              number={loading ? "..." : stats?.totalLearnings || 0} 
+              number={statsLoading ? "..." : (stats?.totalLearnings ?? 0)} 
               label="學習心得" 
             />
             <StatCard 
-              number={loading ? "..." : `$${(stats?.totalCost || 0).toFixed(2)}`} 
+              number={statsLoading ? "..." : `$${(stats?.totalCost ?? 0).toFixed(2)}`} 
               label="總計成本" 
             />
           </div>
@@ -142,18 +151,29 @@ function StatCard({ number, label }: { number: string | number; label: string })
 }
 
 function LatestLogPreview() {
-  const [latestLog, setLatestLog] = useState<any>(null);
+  const [latestLog, setLatestLog] = useState<LatestLog | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLatest() {
       try {
-        const { collection, query, orderBy, limit, getDocs } = await import("firebase/firestore");
-        const { db } = await import("@/lib/firebase");
-        const q = query(collection(db, "logs"), orderBy("date", "desc"), limit(1));
+        const q = query(
+          collection(db, "logs"), 
+          orderBy("date", "desc"), 
+          limit(1)
+        );
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-          setLatestLog({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          setLatestLog({
+            id: doc.id,
+            date: data.date || '無日期',
+            title: data.title || '無標題',
+            summary: data.summary || '無摘要',
+            tasks: Array.isArray(data.tasks) ? data.tasks : [],
+            learnings: Array.isArray(data.learnings) ? data.learnings : []
+          });
         }
       } catch (error) {
         console.error("Error fetching latest log:", error);
