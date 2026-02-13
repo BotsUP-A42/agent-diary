@@ -2,12 +2,13 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCYaiyyfVG7HiLu0t1azKnCwiBpepuuQbA",
+  authDomain: "a42-diary.firebaseapp.com",
+  projectId: "a42-diary",
+  storageBucket: "a42-diary.firebasestorage.app",
+  messagingSenderId: "994727796586",
+  appId: "1:994727796586:web:7d172ec0e6731b7d714f13",
+  measurementId: "G-JSG62LXY00"
 };
 
 // Initialize Firebase
