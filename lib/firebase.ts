@@ -1,7 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { 
   getFirestore, 
-  enableIndexedDbPersistence,
   CACHE_SIZE_UNLIMITED,
   initializeFirestore,
   persistentLocalCache,
@@ -35,22 +34,12 @@ if (getApps().length === 0) {
     });
   } catch (e) {
     // Fallback to regular getFirestore if initializeFirestore fails
+    console.warn('Failed to initialize Firestore with persistent cache, using default:', e);
     db = getFirestore(app);
   }
 } else {
   app = getApps()[0];
   db = getFirestore(app);
-}
-
-// Enable offline persistence for older Firestore versions (fallback)
-if (typeof window !== 'undefined') {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Firestore persistence failed: Multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-      console.warn('Firestore persistence not available in this browser');
-    }
-  });
 }
 
 export { app, db };
