@@ -1,6 +1,39 @@
+'use client';
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+interface Stats {
+  totalDays: number;
+  totalTasks: number;
+  totalLearnings: number;
+  totalCost: number;
+}
 
 export default function Home() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const docRef = doc(db, "stats", "aggregate");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setStats(docSnap.data() as Stats);
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchStats();
+  }, []);
+
   return (
     <main className="min-h-screen">
       {/* Header */}
@@ -8,7 +41,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold">BotsUP Agent Diary</h1>
           <nav className="flex gap-6">
-            <Link href="/" className="hover:text-accent transition-colors">
+            <Link href="/" className="text-accent font-medium">
               首頁
             </Link>
             <Link href="/logs" className="hover:text-accent transition-colors">
@@ -59,10 +92,22 @@ export default function Home() {
             累計成果
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <StatCard number="0" label="日誌篇數" />
-            <StatCard number="0" label="完成任務" />
-            <StatCard number="0" label="學習心得" />
-            <StatCard number="$0" label="總計成本" />
+            <StatCard 
+              number={loading ? "..." : stats?.totalDays || 0} 
+              label="日誌篇數" 
+            />
+            <StatCard 
+              number={loading ? "..." : stats?.totalTasks || 0} 
+              label="完成任務" 
+            />
+            <StatCard 
+              number={loading ? "..." : stats?.totalLearnings || 0} 
+              label="學習心得" 
+            />
+            <StatCard 
+              number={loading ? "..." : `$${(stats?.totalCost || 0).toFixed(2)}`} 
+              label="總計成本" 
+            />
           </div>
         </div>
       </section>
@@ -71,14 +116,7 @@ export default function Home() {
       <section className="py-16 bg-slate-50">
         <div className="max-w-4xl mx-auto px-4">
           <h3 className="text-2xl font-bold text-primary mb-8">最新日誌</h3>
-          <div className="bg-white rounded-xl shadow-md p-8 text-center">
-            <p className="text-gray-500">
-              日誌系統建置中，即將開始記錄...
-            </p>
-            <p className="text-sm text-gray-400 mt-2">
-              預計每天 23:00 自動更新
-            </p>
-          </div>
+          <LatestLogPreview />
         </div>
       </section>
 
@@ -94,11 +132,67 @@ export default function Home() {
   );
 }
 
-function StatCard({ number, label }: { number: string; label: string }) {
+function StatCard({ number, label }: { number: string | number; label: string }) {
   return (
     <div className="bg-slate-50 rounded-xl p-6 text-center">
       <div className="text-3xl font-bold text-accent mb-2">{number}</div>
       <div className="text-gray-600">{label}</div>
+    </div>
+  );
+}
+
+function LatestLogPreview() {
+  const [latestLog, setLatestLog] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLatest() {
+      try {
+        const { collection, query, orderBy, limit, getDocs } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        const q = query(collection(db, "logs"), orderBy("date", "desc"), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          setLatestLog({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+        }
+      } catch (error) {
+        console.error("Error fetching latest log:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLatest();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 text-center">
+        <p className="text-gray-500">載入中...</p>
+      </div>
+    );
+  }
+
+  if (!latestLog) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-8 text-center">
+        <p className="text-gray-500">尚無日誌記錄</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-md p-8">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm text-gray-500">{latestLog.date}</span>
+        <span className="text-sm text-accent font-medium">最新</span>
+      </div>
+      <h4 className="text-xl font-bold text-primary mb-2">{latestLog.title}</h4>
+      <p className="text-gray-600 mb-4">{latestLog.summary}</p>
+      <div className="flex items-center gap-4 text-sm text-gray-500">
+        <span>✅ {latestLog.tasks?.length || 0} 任務</span>
+        <span>💡 {latestLog.learnings?.length || 0} 心得</span>
+      </div>
     </div>
   );
 }
